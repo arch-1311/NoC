@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metro Fare and Route Finder</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        .blue-line { color: blue; }
+        .green-line { color: green; }
+        .interchange { font-weight: bold; color: red; }
+    </style>
+</head>
+<body>
+    <h1>Metro Fare and Route Finder</h1>
+    
+    <!-- Dropdowns for station selection -->
+    <div>
+        <label for="fromStation">From:</label>
+        <select id="fromStation">
+            <option value="">Select a station</option>
+        </select>
+
+        <label for="toStation">To:</label>
+        <select id="toStation">
+            <option value="">Select a station</option>
+        </select>
+    </div>
+
+    <!-- Fare and route display -->
+    <div>
+        <h3>Fare: <span id="fare">N/A</span></h3>
+        <h3>Route:</h3>
+        <ul id="route"></ul>
+    </div>
+
+    <script>
+        $(document).ready(function () {
+            // Define stations and line information
+            const blueLine = [
+                "Wimco Nagar Depot", "Wimco Nagar", "Thiruvottriyur", "Thiruvottriyur Theradi", "Kaladipet", 
+                "Tollgate", "New Washermanpet", "Tondiarpet", "Sir Theagaraya College", "Washermanpet", 
+                "Mannadi", "High Court", "MGR Central (Chennai Central)", "Government Estate", "LIC", 
+                "Thousand Lights", "AG DMS", "Teynampet", "Nandanam", "Saidapet", "Little Mount", 
+                "Guindy", "Arignar Anna Alandur", "Nanganallur Road", "Meenambakkam", "Chennai International Airport"
+            ];
+            
+            const greenLine = [
+                "MGR Central (Chennai Central)", "Egmore", "Nehru Park", "Kilpauk Medical College", 
+                "Pachaiyappa College", "Shenoy Nagar", "Anna Nagar East", "Anna Nagar Tower", 
+                "Thirumangalam", "Koyambedu", "CMBT", "Arumbakkam", "Vadapalani", "Ashok Nagar", 
+                "Ekkattuthangal", "Arignar Anna Alandur", "St Thomas Mount"
+            ];
+
+            const interchanges = {
+                "MGR Central (Chennai Central)": ["Blue", "Green"],
+                "Arignar Anna Alandur": ["Blue", "Green"]
+            };
+
+            const stations = [...new Set([...blueLine, ...greenLine])];
+            const fareMatrix = {}; // Populate dynamically from CSV
+            const connections = {};
+
+            // Populate fareMatrix and connections dynamically from fare_matrix.csv
+            $.get("metro-fare/fare-chart-english.csv", function (data) {
+                const lines = data.split("\n");
+                const headers = lines[0].split(",");
+
+                // Initialize fareMatrix and connections
+                for (let i = 1; i < headers.length; i++) {
+                    fareMatrix[headers[i].trim()] = {};
+                    connections[headers[i].trim()] = [];
+                }
+
+                // Parse fare matrix
+                for (let i = 1; i < lines.length; i++) {
+                    const values = lines[i].split(",");
+                    const rowStation = values[0].trim();
+                    for (let j = 1; j < values.length; j++) {
+                        const fare = parseInt(values[j].trim(), 10) || 0;
+                        fareMatrix[rowStation][headers[j].trim()] = fare;
+                        if (fare > 0) {
+                            connections[rowStation].push(headers[j].trim());
+                        }
+                    }
+                }
+
+                // Populate dropdowns
+                stations.forEach(station => {
+                    $("#fromStation, #toStation").append(new Option(station, station));
+                });
+            });
+
+            // Determine station line
+            const getStationLine = (station) => {
+                if (blueLine.includes(station)) return "blue";
+                if (greenLine.includes(station)) return "green";
+                return null;
+            };
+
+            // Find route between stations
+            $("#fromStation, #toStation").change(function () {
+                const fromStation = $("#fromStation").val();
+                const toStation = $("#toStation").val();
+
+                if (fromStation && toStation) {
+                    // Calculate fare
+                    const fare = fareMatrix[fromStation]?.[toStation];
+                    $("#fare").text(fare !== undefined ? fare : "N/A");
+
+                    // Find route
+                    const path = [];
+                    const visited = new Set();
+                    const lineFrom = getStationLine(fromStation);
+                    const lineTo = getStationLine(toStation);
+
+                    function findRoute(current, destination) {
+                        if (current === destination) {
+                            path.push(current);
+                            return true;
+                        }
+                        if (visited.has(current)) return false;
+                        visited.add(current);
+                        path.push(current);
+
+                        for (let next of connections[current] || []) {
+                            if (findRoute(next, destination)) {
+                                return true;
+                            }
+                        }
+                        path.pop();
+                        return false;
+                    }
+
+                    if (lineFrom === lineTo) {
+                        findRoute(fromStation, toStation);
+                    } else {
+                        // Add interchange
+                        const interchange = lineFrom === "blue" ? "Arignar Anna Alandur" : "MGR Central (Chennai Central)";
+                        findRoute(fromStation, interchange);
+                        findRoute(interchange, toStation);
+                    }
+
+                    // Display route
+                    $("#route").html(
+                        path.map(station => {
+                            const line = getStationLine(station);
+                            const colorClass = line === "blue" ? "blue-line" : "green-line";
+                            const isInterchange = interchanges[station];
+                            return `<li class="${colorClass} ${isInterchange ? "interchange" : ""}">◉ ${station}</li>`;
+                        }).join("")
+                    );
+                }
+            });
+        });
+    </script>
+</body>
+</html>

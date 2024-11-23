@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rain Forecast Gauge</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+  --arc-bg-color: #e0e0e0;
+  --needle-color: #ff0000;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  margin: 0;
+  background-color: #f5f5f5;
+}
+
+.gauge-container {
+  text-align: center;
+}
+
+.arc-bg {
+  fill: var(--arc-bg-color);
+}
+
+#needle {
+  transform-origin: center;
+  transition: transform 0.5s ease;
+}
+
+#forecast-text {
+  margin-top: 15px;
+  font-size: 1.2em;
+}
+
+  </style>
+</head>
+<body> 
+        <!-- <div class="tomorrow"
+           data-location-id="133426"
+           data-language="EN"
+           data-unit-system="METRIC"
+           data-skin="light"
+           data-widget-type="upcoming"
+           style="padding-bottom:22px;position:relative;"
+        >
+          <a
+            href="https://www.tomorrow.io/weather-api/"
+            rel="nofollow noopener noreferrer"
+            target="_blank"
+            style="position: absolute; bottom: 0; transform: translateX(-50%); left: 50%;"
+          >
+            <img
+              alt="Powered by the Tomorrow.io Weather API"
+              src="https://weather-website-client.tomorrow.io/img/powered-by.svg"
+              width="250"
+              height="18"
+            />
+          </a>
+        </div>
+        <script>
+            (function(d, s, id) {
+                if (d.getElementById(id)) {
+                    if (window.__TOMORROW__) {
+                        window.__TOMORROW__.renderWidget();
+                    }
+                    return;
+                }
+                const fjs = d.getElementsByTagName(s)[0];
+                const js = d.createElement(s);
+                js.id = id;
+                js.src = "https://www.tomorrow.io/v1/widget/sdk/sdk.bundle.min.js";
+    
+                fjs.parentNode.insertBefore(js, fjs);
+            })(document, 'script', 'tomorrow-sdk');
+        </script> -->
+       
+            <div style="width: 300px;">
+                <canvas id="rainfallGauge"></canvas>
+            </div>
+            <script>
+                const ctx = document.getElementById('rainfallGauge').getContext('2d');
+
+const data = {
+    datasets: [{
+        data: [70, 30],  // Set initial rainfall level as part of the total
+        backgroundColor: ['#4CAF50', '#ddd'],
+        borderWidth: 0,
+        circumference: 180,
+        rotation: -90,
+        cutout: '75%',
+    }]
+};
+
+const options = {
+    responsive: true,
+    plugins: {
+        tooltip: { enabled: false },
+        legend: { display: false }
+    },
+    animation: {
+        animateRotate: true,
+        animateScale: true
+    }
+};
+
+const rainfallGauge = new Chart(ctx, {
+    type: 'doughnut',
+    data: data,
+    options: options
+});
+
+// Function to update gauge level
+function updateRainfallGauge(rainfallLevel) {
+    rainfallGauge.data.datasets[0].data[0] = rainfallLevel;
+    rainfallGauge.data.datasets[0].data[1] = 100 - rainfallLevel;
+    rainfallGauge.update();
+}
+
+// Simulate updates (replace with actual rainfall data)
+updateRainfallGauge(55);  // Example: setting to 55%
+
+            </script>
+        
+    </body>
+</html>
