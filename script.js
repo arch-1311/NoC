@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function enableLightMode() {
         body.classList.remove('dark-mode');
         themeIcon.classList.replace('fa-sun', 'fa-moon');
-        bannerImage.src = '/NoC//NOC2024bg.png';
+        bannerImage.src = '/NoC/NOC2024bg.png';
     }
 });
 
